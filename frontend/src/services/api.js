@@ -1,53 +1,66 @@
-const API_BASE_URL = "http://127.0.0.1:8000";
+```javascript
+const API_BASE_URL =
+  "https://security-log-analyzer-backend.onrender.com";
 
 const handleResponse = async (response) => {
   if (!response.ok) {
     throw new Error(`HTTP error! Status: ${response.status}`);
   }
-  return response.json();
+
+  return await response.json();
 };
 
+// Check whether the FastAPI backend is healthy
 export const getHealth = async () => {
   try {
-    const res = await fetch(`${API_BASE_URL}/health`);
-    return await handleResponse(res);
+    const response = await fetch(`${API_BASE_URL}/health`);
+    return await handleResponse(response);
   } catch (error) {
-    return { status: "offline", error: error.message };
+    console.error("Backend health check failed:", error);
+    throw error;
   }
 };
 
-export const getLogs = async () => {
+// Get basic backend information
+export const getBackendStatus = async () => {
   try {
-    const res = await fetch(`${API_BASE_URL}/logs`);
-    return await handleResponse(res);
+    const response = await fetch(`${API_BASE_URL}/`);
+    return await handleResponse(response);
   } catch (error) {
-    return [];
+    console.error("Backend status check failed:", error);
+    throw error;
   }
 };
 
-export const getIncidents = async () => {
+// Generic GET request
+export const apiGet = async (endpoint) => {
   try {
-    const res = await fetch(`${API_BASE_URL}/incidents`);
-    return await handleResponse(res);
+    const response = await fetch(`${API_BASE_URL}${endpoint}`);
+    return await handleResponse(response);
   } catch (error) {
-    return [];
+    console.error(`GET ${endpoint} failed:`, error);
+    throw error;
   }
 };
 
-export const getAnalytics = async () => {
+// Generic POST request
+export const apiPost = async (endpoint, data) => {
   try {
-    const res = await fetch(`${API_BASE_URL}/analytics`);
-    return await handleResponse(res);
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+
+    return await handleResponse(response);
   } catch (error) {
-    return null;
+    console.error(`POST ${endpoint} failed:`, error);
+    throw error;
   }
 };
 
-export const getReports = async () => {
-  try {
-    const res = await fetch(`${API_BASE_URL}/reports`);
-    return await handleResponse(res);
-  } catch (error) {
-    return [];
-  }
-};
+// Export backend URL
+export { API_BASE_URL };
+```
