@@ -1,0 +1,8 @@
+2026-08-09 11:01:10 INFO provider=AWS service=EC2 action=StartInstance user=alice source_ip=192.168.1.20
+2026-08-09 11:03:22 INFO provider=AWS service=S3 action=GetObject user=alice source_ip=192.168.1.20
+2026-08-09 11:05:47 WARN provider=AWS service=IAM action=CreateAccessKey user=unknown source_ip=198.51.100.55
+2026-08-09 11:06:02 WARN provider=AWS service=IAM action=CreateUser user=unknown source_ip=198.51.100.55
+2026-08-09 11:07:19 WARN provider=AWS service=S3 action=BucketPolicyChange user=unknown source_ip=198.51.100.55
+2026-08-09 11:09:41 INFO provider=AWS service=CloudTrail action=LookupEvents user=admin source_ip=192.168.1.10
+2026-08-09 11:12:03 INFO provider=AWS service=EC2 action=StopInstance user=bob source_ip=192.168.1.21
+2026-08-09 11:14:55 WARN provider=AWS service=IAM action=DeleteUser user=unknown source_ip=198.51.100.55

@@ -1,0 +1,11 @@
+2026-08-09 10:01:12 INFO method=GET path=/login status=200 ip=192.168.1.30
+2026-08-09 10:02:44 INFO method=GET path=/dashboard status=200 ip=192.168.1.30
+2026-08-09 10:04:21 WARN method=GET path=/admin status=403 ip=203.0.113.45
+2026-08-09 10:04:25 WARN method=GET path=/admin status=403 ip=203.0.113.45
+2026-08-09 10:04:29 WARN method=GET path=/admin status=403 ip=203.0.113.45
+2026-08-09 10:05:01 WARN method=GET path=/../../etc/passwd status=400 ip=203.0.113.45
+2026-08-09 10:06:18 INFO method=GET path=/products status=200 ip=198.51.100.20
+2026-08-09 10:07:32 WARN method=POST path=/login status=401 ip=203.0.113.45
+2026-08-09 10:07:35 WARN method=POST path=/login status=401 ip=203.0.113.45
+2026-08-09 10:07:39 WARN method=POST path=/login status=401 ip=203.0.113.45
+2026-08-09 10:09:44 INFO method=GET path=/logout status=200 ip=192.168.1.30
