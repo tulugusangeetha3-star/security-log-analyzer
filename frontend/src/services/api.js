@@ -1,59 +1,52 @@
-const API_BASE_URL =
-  "https://security-log-analyzer-backend.onrender.com";
-
-const handleResponse = async (response) => {
-  if (!response.ok) {
-    throw new Error(`HTTP error! Status: ${response.status}`);
-  }
-
-  return await response.json();
-};
+const API_BASE_URL = "https://security-log-analyzer-backend.onrender.com";
 
 export const getHealth = async () => {
   try {
     const response = await fetch(`${API_BASE_URL}/health`);
-    return await handleResponse(response);
+    if (!response.ok) throw new Error("Backend offline");
+    return await response.json();
   } catch (error) {
-    console.error("Backend health check failed:", error);
-    throw error;
+    console.error("Health check error:", error);
+    return { status: "offline" };
   }
 };
 
-export const getBackendStatus = async () => {
+export const getAnalytics = async () => {
   try {
-    const response = await fetch(`${API_BASE_URL}/`);
-    return await handleResponse(response);
+    const response = await fetch(`${API_BASE_URL}/analytics`);
+    return await response.json();
   } catch (error) {
-    console.error("Backend status check failed:", error);
-    throw error;
+    console.error("Analytics fetch error:", error);
+    return { total_logs: 0, high_risk: 0, medium_risk: 0, low_risk: 0 };
   }
 };
 
-export const apiGet = async (endpoint) => {
+export const getLogs = async () => {
   try {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`);
-    return await handleResponse(response);
+    const response = await fetch(`${API_BASE_URL}/logs`);
+    return await response.json();
   } catch (error) {
-    console.error(`GET ${endpoint} failed:`, error);
-    throw error;
+    console.error("Logs fetch error:", error);
+    return { logs: [] };
   }
 };
 
-export const apiPost = async (endpoint, data) => {
+export const getIncidents = async () => {
   try {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
-    });
-
-    return await handleResponse(response);
+    const response = await fetch(`${API_BASE_URL}/incidents`);
+    return await response.json();
   } catch (error) {
-    console.error(`POST ${endpoint} failed:`, error);
-    throw error;
+    console.error("Incidents fetch error:", error);
+    return { incidents: [] };
   }
 };
 
-export { API_BASE_URL };
+export const getReports = async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/reports`);
+    return await response.json();
+  } catch (error) {
+    console.error("Reports fetch error:", error);
+    return {};
+  }
+};
