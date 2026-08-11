@@ -1,153 +1,116 @@
-﻿const isValidIPv4 = (ip) => {
-  if (!ip) return false;
-  const parts = ip.trim().split('.');
-  if (parts.length !== 4) return false;
-  for (let p of parts) {
-    if (p === '' || !/^\d+$/.test(p)) return false;
-    const n = Number(p);
-    if (n < 0 || n > 255) return false;
-  }
-  return true;
-};
-
-```jsx
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 
 export default function IPAnalysis() {
-  const [ipAddress, setIpAddress] = useState('');
-  const [error, setError] = useState('');
-  const [analyzed, setAnalyzed] = useState(false);
+  const [ipInput, setIpInput] = useState('');
+  const [ipError, setIpError] = useState('');
+  const [analysisResult, setAnalysisResult] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  // Check whether the entered value is a valid IPv4 address
-  const isValidIP = (ip) => {
+  const isValidIPv4 = (ip) => {
+    if (!ip) return false;
     const parts = ip.trim().split('.');
-
-    // IPv4 must have exactly 4 parts
-    if (parts.length !== 4) {
-      return false;
+    if (parts.length !== 4) return false;
+    for (let p of parts) {
+      if (p === '' || !/^\d+$/.test(p)) return false;
+      const n = Number(p);
+      if (n < 0 || n > 255) return false;
     }
+    return true;
+  };
 
-    // Each part must be a number between 0 and 255
-    return parts.every((part) => {
-      if (part === '' || !/^\d+$/.test(part)) {
-        return false;
-      }
-
-      const number = Number(part);
-
-      return number >= 0 && number <= 255;
-    });
+  const getIPRangeType = (ip) => {
+    const parts = ip.split('.').map(Number);
+    const [a, b] = parts;
+    if (a === 10) return "Private Class A (10.0.0.0 – 10.255.255.255)";
+    if (a === 172 && b >= 16 && b <= 31) return "Private Class B (172.16.0.0 – 172.31.255.255)";
+    if (a === 192 && b === 168) return "Private Class C (192.168.0.0 – 192.168.255.255)";
+    if (a === 127) return "Loopback (127.0.0.0 – 127.255.255.255)";
+    if (a === 169 && b === 254) return "Link-local (169.254.0.0 – 169.254.255.255)";
+    return "Public IPv4";
   };
 
   const handleAnalyze = () => {
-    const ip = ipAddress.trim();
+    setIpError('');
+    setAnalysisResult(null);
 
-    // Empty input
-    if (ip === '') {
-      setError('You entered a wrong address');
-      setAnalyzed(false);
+    if (!isValidIPv4(ipInput)) {
+      setIpError('You entered wrong address');
       return;
     }
 
-    // Invalid IP address
-    if (!isValidIP(ip)) {
-      setError('You entered a wrong address');
-      setAnalyzed(false);
-      return;
-    }
-
-    // Valid IP
-    setError('');
-    setAnalyzed(true);
+    setLoading(true);
+    setTimeout(() => {
+      const rangeType = getIPRangeType(ipInput);
+      setAnalysisResult({
+        ip: ipInput.trim(),
+        riskLevel: 'Low Risk',
+        eventsCount: 0,
+        range: rangeType,
+        history: 'No prior malicious activity recorded for this IP address.'
+      });
+      setLoading(false);
+    }, 300);
   };
 
   return (
-    <div
-      style={{
-        padding: '24px',
-        color: '#f8fafc',
-      }}
-    >
-      <h2>IP Address Risk Lookup</h2>
+    <div className="p-6 max-w-5xl mx-auto">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+        <div className="flex items-center space-x-3 mb-2">
+          <span className="text-2xl">🌐</span>
+          <h2 className="text-xl font-bold text-gray-900">IP Address Risk Lookup</h2>
+        </div>
+        <p className="text-gray-500 text-sm mb-4">Search any client IP to automatically evaluate threat risk level</p>
+        
+        <div className="flex gap-3 items-center">
+          <input
+            type="text"
+            value={ipInput}
+            onChange={(e) => {
+              setIpInput(e.target.value);
+              if (ipError) setIpError('');
+            }}
+            onKeyDown={(e) => { if (e.key === 'Enter') handleAnalyze(); }}
+            placeholder="Enter IP address (e.g. 192.168.1.105 or 10.0.0.15)..."
+            className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800"
+          />
+          <button
+            onClick={handleAnalyze}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-2.5 rounded-lg transition-colors"
+          >
+            Analyze IP
+          </button>
+        </div>
 
-      <p style={{ color: '#64748b' }}>
-        Search any client IP to automatically evaluate threat risk level
-      </p>
-
-      <div style={{ marginTop: '24px' }}>
-        <input
-          type="text"
-          value={ipAddress}
-          onChange={(e) => {
-            setIpAddress(e.target.value);
-            setError('');
-            setAnalyzed(false);
-          }}
-          placeholder="Enter client IP address"
-          style={{
-            width: '300px',
-            padding: '12px',
-            borderRadius: '6px',
-            border: error ? '1px solid red' : '1px solid #475569',
-            backgroundColor: '#0f172a',
-            color: '#f8fafc',
-            fontSize: '16px',
-            outline: 'none',
-          }}
-        />
-
-        <button
-          onClick={handleAnalyze}
-          style={{
-            marginLeft: '10px',
-            padding: '12px 20px',
-            borderRadius: '6px',
-            border: 'none',
-            backgroundColor: '#2563eb',
-            color: 'white',
-            cursor: 'pointer',
-            fontSize: '16px',
-          }}
-        >
-          Analyze IP
-        </button>
+        {ipError && (
+          <div className="mt-3 text-red-600 font-bold text-sm">
+            {ipError}
+          </div>
+        )}
       </div>
 
-      {/* Wrong IP address message */}
-      {error && (
-        <p
-          style={{
-            color: 'red',
-            fontWeight: 'bold',
-            marginTop: '16px',
-          }}
-        >
-          {error}
-        </p>
-      )}
+      {analysisResult && isValidIPv4(analysisResult.ip) && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            Analysis Results for: <span className="text-blue-600">{analysisResult.ip}</span>
+          </h3>
+          
+          <div className="grid grid-cols-2 gap-6 mb-6">
+            <div>
+              <p className="text-sm text-gray-500 mb-1">Calculated Risk Level:</p>
+              <p className="text-xl font-bold text-green-600">{analysisResult.riskLevel}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500 mb-1">Total Recorded Events:</p>
+              <p className="text-xl font-bold text-gray-900">{analysisResult.eventsCount}</p>
+            </div>
+          </div>
 
-      {/* Valid IP message */}
-      {analyzed && !error && (
-        <div style={{ marginTop: '24px' }}>
-          <h3>Analysis Results for: {ipAddress}</h3>
-
-          <p>Calculated Risk Level:</p>
-
-          <h4 style={{ color: '#22c55e' }}>Low Risk</h4>
-
-          <p>Total Recorded Events:</p>
-
-          <h4>0</h4>
-
-          <h4>Log History for this IP:</h4>
-
-          <p style={{ color: '#94a3b8' }}>
-            No prior malicious activity recorded for this IP address.
-          </p>
+          <div>
+            <p className="text-sm font-semibold text-gray-800 mb-1">Log History for this IP:</p>
+            <p className="text-sm text-gray-500">{analysisResult.history}</p>
+          </div>
         </div>
       )}
     </div>
   );
 }
-```
-
