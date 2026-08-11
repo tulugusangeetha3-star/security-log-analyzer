@@ -8,8 +8,14 @@ export default function IPAnalysis() {
   const isValidIPv4 = (ip) => {
     if (!ip || typeof ip !== 'string') return false;
     const trimmed = ip.trim();
+    
+    // Must contain exactly 3 dots
+    const dotCount = (trimmed.match(/\./g) || []).length;
+    if (dotCount !== 3) return false;
+
     const parts = trimmed.split('.');
     if (parts.length !== 4) return false;
+
     for (let p of parts) {
       if (p === '' || !/^\d+$/.test(p)) return false;
       const n = Number(p);
