@@ -58,13 +58,14 @@ const refreshBackendConnection = async () => {
 const handleIpChange = (e) => {
   const val = e.target.value;
   setIpInput(val);
-  const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
+  const ipRegex = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
   if (val && !ipRegex.test(val)) {
     setIpError("You entered wrong address");
   } else {
     setIpError("");
   }
 };
+
 
 
 
