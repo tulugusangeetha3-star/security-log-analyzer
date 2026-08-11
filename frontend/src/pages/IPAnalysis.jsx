@@ -4,7 +4,6 @@ export default function IPAnalysis() {
   const [ipInput, setIpInput] = useState('');
   const [ipError, setIpError] = useState('');
   const [analysisResult, setAnalysisResult] = useState(null);
-  const [loading, setLoading] = useState(false);
 
   const isValidIPv4 = (ip) => {
     if (!ip) return false;
@@ -18,38 +17,30 @@ export default function IPAnalysis() {
     return true;
   };
 
-  const getIPRangeType = (ip) => {
-    const parts = ip.split('.').map(Number);
-    const [a, b] = parts;
-    if (a === 10) return "Private Class A (10.0.0.0 – 10.255.255.255)";
-    if (a === 172 && b >= 16 && b <= 31) return "Private Class B (172.16.0.0 – 172.31.255.255)";
-    if (a === 192 && b === 168) return "Private Class C (192.168.0.0 – 192.168.255.255)";
-    if (a === 127) return "Loopback (127.0.0.0 – 127.255.255.255)";
-    if (a === 169 && b === 254) return "Link-local (169.254.0.0 – 169.254.255.255)";
-    return "Public IPv4";
-  };
-
   const handleAnalyze = () => {
-    setIpError('');
-    setAnalysisResult(null);
-
     if (!isValidIPv4(ipInput)) {
+      setAnalysisResult(null);
       setIpError('You entered wrong address');
       return;
     }
 
-    setLoading(true);
-    setTimeout(() => {
-      const rangeType = getIPRangeType(ipInput);
-      setAnalysisResult({
-        ip: ipInput.trim(),
-        riskLevel: 'Low Risk',
-        eventsCount: 0,
-        range: rangeType,
-        history: 'No prior malicious activity recorded for this IP address.'
-      });
-      setLoading(false);
-    }, 300);
+    setIpError('');
+    const parts = ipInput.trim().split('.').map(Number);
+    const [a, b] = parts;
+    let rangeType = "Public IPv4";
+    if (a === 10) rangeType = "Private Class A (10.0.0.0 – 10.255.255.255)";
+    else if (a === 172 && b >= 16 && b <= 31) rangeType = "Private Class B (172.16.0.0 – 172.31.255.255)";
+    else if (a === 192 && b === 168) rangeType = "Private Class C (192.168.0.0 – 192.168.255.255)";
+    else if (a === 127) rangeType = "Loopback (127.0.0.0 – 127.255.255.255)";
+    else if (a === 169 && b === 254) rangeType = "Link-local (169.254.0.0 – 169.254.255.255)";
+
+    setAnalysisResult({
+      ip: ipInput.trim(),
+      riskLevel: 'Low Risk',
+      eventsCount: 0,
+      range: rangeType,
+      history: 'No prior malicious activity recorded for this IP address.'
+    });
   };
 
   return (
@@ -67,7 +58,8 @@ export default function IPAnalysis() {
             value={ipInput}
             onChange={(e) => {
               setIpInput(e.target.value);
-              if (ipError) setIpError('');
+              setIpError('');
+              setAnalysisResult(null);
             }}
             onKeyDown={(e) => { if (e.key === 'Enter') handleAnalyze(); }}
             placeholder="Enter IP address (e.g. 192.168.1.105 or 10.0.0.15)..."
@@ -88,7 +80,7 @@ export default function IPAnalysis() {
         )}
       </div>
 
-      {analysisResult && isValidIPv4(analysisResult.ip) && (
+      {!ipError && analysisResult && isValidIPv4(analysisResult.ip) && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">
             Analysis Results for: <span className="text-blue-600">{analysisResult.ip}</span>
