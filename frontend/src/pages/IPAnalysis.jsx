@@ -6,8 +6,9 @@ export default function IPAnalysis() {
   const [analysisResult, setAnalysisResult] = useState(null);
 
   const isValidIPv4 = (ip) => {
-    if (!ip) return false;
-    const parts = ip.trim().split('.');
+    if (!ip || typeof ip !== 'string') return false;
+    const trimmed = ip.trim();
+    const parts = trimmed.split('.');
     if (parts.length !== 4) return false;
     for (let p of parts) {
       if (p === '' || !/^\d+$/.test(p)) return false;
@@ -18,13 +19,14 @@ export default function IPAnalysis() {
   };
 
   const handleAnalyze = () => {
+    setIpError('');
+    setAnalysisResult(null);
+
     if (!isValidIPv4(ipInput)) {
-      setAnalysisResult(null);
       setIpError('You entered wrong address');
       return;
     }
 
-    setIpError('');
     const parts = ipInput.trim().split('.').map(Number);
     const [a, b] = parts;
     let rangeType = "Public IPv4";
@@ -80,7 +82,7 @@ export default function IPAnalysis() {
         )}
       </div>
 
-      {!ipError && analysisResult && isValidIPv4(analysisResult.ip) && (
+      {analysisResult && !ipError && isValidIPv4(analysisResult.ip) && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">
             Analysis Results for: <span className="text-blue-600">{analysisResult.ip}</span>
