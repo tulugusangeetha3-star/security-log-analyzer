@@ -58,7 +58,7 @@ const refreshBackendConnection = async () => {
 const handleIpChange = (e) => {
   const val = e.target.value;
   setIpInput(val);
-  const ipRegex = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+  const rangeType = checkIPRange(ipInput); if (!rangeType) { setIpError("You entered wrong address"); return; } setIpError("");
   if (val && !ipRegex.test(val)) {
     setIpError("You entered wrong address");
   } else {
@@ -69,3 +69,20 @@ const handleIpChange = (e) => {
 
 
 
+
+const checkIPRange = (ipStr) => {
+  if (!ipStr) return null;
+  const parts = ipStr.trim().split('.');
+  if (parts.length !== 4) return null;
+  const nums = parts.map(p => Number(p));
+  if (nums.some(n => isNaN(n) || n < 0 || n > 255)) return null;
+  
+  const [a, b, c, d] = nums;
+  if (a === 10) return "Private Class A (10.0.0.0 – 10.255.255.255)";
+  if (a === 172 && b >= 16 && b <= 31) return "Private Class B (172.16.0.0 – 172.31.255.255)";
+  if (a === 192 && b === 168) return "Private Class C (192.168.0.0 – 192.168.255.255)";
+  if (a === 127) return "Loopback (127.0.0.0 – 127.255.255.255)";
+  if (a === 169 && b === 254) return "Link-local (169.254.0.0 – 169.254.255.255)";
+  
+  return "Public IPv4";
+};
