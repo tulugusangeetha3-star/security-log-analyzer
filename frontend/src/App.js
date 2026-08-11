@@ -1,4 +1,16 @@
-﻿const API_BASE_URL =
+﻿const isValidIPv4 = (ip) => {
+  if (!ip) return false;
+  const parts = ip.trim().split('.');
+  if (parts.length !== 4) return false;
+  for (let p of parts) {
+    if (p === '' || !/^\d+$/.test(p)) return false;
+    const n = Number(p);
+    if (n < 0 || n > 255) return false;
+  }
+  return true;
+};
+
+const API_BASE_URL =
   "https://security-log-analyzer-backend.onrender.com";
 
 const handleResponse = async (response) => {
@@ -93,6 +105,7 @@ const checkIPRange = (ipStr) => {
   
   return "Public IPv4";
 };
+
 
 
 
