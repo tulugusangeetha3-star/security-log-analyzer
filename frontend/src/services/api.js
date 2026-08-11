@@ -1,6 +1,6 @@
-// ⚠️ REPLACE THIS URL WITH YOUR ACTUAL RENDER BACKEND URL (NO TRAILING SLASH)
+﻿// âš ï¸ REPLACE THIS URL WITH YOUR ACTUAL RENDER BACKEND URL (NO TRAILING SLASH)
 // Example: "https://security-backend-1234.onrender.com"
-export const API_BASE_URL = "http://127.0.0.1:8000";
+export const API_BASE_URL = "https://security-log-analyzer-backend.onrender.com";
 
 export const getHealth = async () => {
   try {
