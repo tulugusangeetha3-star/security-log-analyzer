@@ -72,10 +72,17 @@ const handleIpChange = (e) => {
 
 const checkIPRange = (ipStr) => {
   if (!ipStr) return null;
-  const parts = ipStr.trim().split('.');
+  const trimmed = ipStr.trim();
+  const parts = trimmed.split('.');
   if (parts.length !== 4) return null;
-  const nums = parts.map(p => Number(p));
-  if (nums.some(n => isNaN(n) || n < 0 || n > 255)) return null;
+  
+  const nums = [];
+  for (let p of parts) {
+    if (p === '' || !/^\d+$/.test(p)) return null;
+    const n = Number(p);
+    if (n < 0 || n > 255) return null;
+    nums.push(n);
+  }
   
   const [a, b, c, d] = nums;
   if (a === 10) return "Private Class A (10.0.0.0 – 10.255.255.255)";
@@ -86,6 +93,7 @@ const checkIPRange = (ipStr) => {
   
   return "Public IPv4";
 };
+
 
 
 
