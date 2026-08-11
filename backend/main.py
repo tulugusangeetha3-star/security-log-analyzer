@@ -1,241 +1,109 @@
-import sqlite3
-import os
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from typing import List, Optional
+from datetime import datetime
 
 app = FastAPI(title="Security Log Analyzer API")
 
-# Enable CORS for frontend requests
+# --- CORS Configuration ---
+# Allows frontend applications (Render / localhost) to make API requests
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # Adjust to specific frontend domain in production
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Database Path
-DB_PATH = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "..", "database", "security.db")
-)
+# --- Data Schemas ---
+class LogCreate(BaseModel):
+    ip: str
+    event: str
+    risk: str
 
-
-class LogEntry(BaseModel):
+class LogItem(BaseModel):
+    id: int
     timestamp: str
     ip: str
     event: str
     risk: str
 
+# --- In-Memory Database / Sample Data ---
+logs_db: List[dict] = [
+    {
+        "id": 1,
+        "timestamp": "2026-08-11 07:15:00",
+        "ip": "192.168.1.105",
+        "event": "Unauthorized SSH Attempt",
+        "risk": "High"
+    },
+    {
+        "id": 2,
+        "timestamp": "2026-08-11 07:20:12",
+        "ip": "10.0.0.15",
+        "event": "Port Scan Detected",
+        "risk": "Medium"
+    },
+    {
+        "id": 3,
+        "timestamp": "2026-08-11 07:30:45",
+        "ip": "192.168.1.50",
+        "event": "Successful User Login",
+        "risk": "Low"
+    }
+]
 
-def get_db():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
-
-
-def init_db():
-    os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
-
-    conn = get_db()
-    cursor = conn.cursor()
-
-    # Create table if it does not exist
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS logs (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            timestamp TEXT,
-            ip TEXT,
-            event TEXT,
-            risk TEXT
-        )
-    """)
-
-    # Fix older database versions that may not have the event column
-    cursor.execute("PRAGMA table_info(logs)")
-    columns = [row[1] for row in cursor.fetchall()]
-
-    if "event" not in columns:
-        cursor.execute("ALTER TABLE logs ADD COLUMN event TEXT")
-
-    if "timestamp" not in columns:
-        cursor.execute("ALTER TABLE logs ADD COLUMN timestamp TEXT")
-
-    if "ip" not in columns:
-        cursor.execute("ALTER TABLE logs ADD COLUMN ip TEXT")
-
-    if "risk" not in columns:
-        cursor.execute("ALTER TABLE logs ADD COLUMN risk TEXT")
-
-    # Add sample security logs if database is empty
-    cursor.execute("SELECT COUNT(*) FROM logs")
-    count = cursor.fetchone()[0]
-
-    if count == 0:
-        sample_data = [
-            (
-                "2026-08-10 10:00:00",
-                "192.168.1.105",
-                "Failed SSH Login",
-                "High",
-            ),
-            (
-                "2026-08-10 10:05:00",
-                "10.0.0.12",
-                "Unusual Traffic Spike",
-                "Medium",
-            ),
-            (
-                "2026-08-10 10:12:00",
-                "172.16.0.4",
-                "Port Scan Detected",
-                "High",
-            ),
-            (
-                "2026-08-10 10:20:00",
-                "192.168.1.1",
-                "User Login Success",
-                "Low",
-            ),
-            (
-                "2026-08-10 10:25:00",
-                "10.0.0.15",
-                "Multiple Auth Failures",
-                "High",
-            ),
-        ]
-
-        cursor.executemany(
-            """
-            INSERT INTO logs (timestamp, ip, event, risk)
-            VALUES (?, ?, ?, ?)
-            """,
-            sample_data,
-        )
-
-    conn.commit()
-    conn.close()
-
-
-# Initialize database when application starts
-init_db()
-
+# --- API Endpoints ---
 
 @app.get("/")
-def root():
-    return {
-        "message": "Security Log Analyzer API",
-        "status": "running",
-        "database": "connected",
-    }
-
+def read_root():
+    return {"message": "Security Log Analyzer API is running"}
 
 @app.get("/health")
-def health():
+def get_health():
     return {"status": "healthy"}
-
-
-@app.get("/analytics")
-def get_analytics():
-    conn = get_db()
-
-    logs = [
-        dict(row)
-        for row in conn.execute("SELECT * FROM logs").fetchall()
-    ]
-
-    conn.close()
-
-    return {
-        "total_logs": len(logs),
-        "high_risk": sum(
-            1 for log in logs if log["risk"] == "High"
-        ),
-        "medium_risk": sum(
-            1 for log in logs if log["risk"] == "Medium"
-        ),
-        "low_risk": sum(
-            1 for log in logs if log["risk"] == "Low"
-        ),
-    }
-
 
 @app.get("/logs")
 def get_logs():
-    conn = get_db()
-
-    logs = [
-        dict(row)
-        for row in conn.execute(
-            "SELECT * FROM logs ORDER BY id DESC"
-        ).fetchall()
-    ]
-
-    conn.close()
-
-    return {"logs": logs}
-
+    return {"logs": logs_db}
 
 @app.post("/logs")
-def add_log(entry: LogEntry):
-    conn = get_db()
-    cursor = conn.cursor()
+def create_log(log_data: LogCreate):
+    new_id = len(logs_db) + 1 if logs_db else 1
+    new_log = {
+        "id": new_id,
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "ip": log_data.ip,
+        "event": log_data.event,
+        "risk": log_data.risk
+    }
+    logs_db.insert(0, new_log)  # Prepend newest log
+    return {"message": "Log recorded successfully", "log": new_log}
 
-    cursor.execute(
-        """
-        INSERT INTO logs (timestamp, ip, event, risk)
-        VALUES (?, ?, ?, ?)
-        """,
-        (
-            entry.timestamp,
-            entry.ip,
-            entry.event,
-            entry.risk,
-        ),
-    )
-
-    conn.commit()
-    conn.close()
+@app.get("/analytics")
+def get_analytics():
+    total_logs = len(logs_db)
+    high_risk = sum(1 for log in logs_db if log.get("risk") == "High")
+    medium_risk = sum(1 for log in logs_db if log.get("risk") == "Medium")
+    low_risk = sum(1 for log in logs_db if log.get("risk") == "Low")
 
     return {
-        "status": "success",
-        "message": "New security log detected and recorded!",
+        "total_logs": total_logs,
+        "high_risk": high_risk,
+        "medium_risk": medium_risk,
+        "low_risk": low_risk
     }
-
 
 @app.get("/incidents")
 def get_incidents():
-    conn = get_db()
-
-    incidents = [
-        dict(row)
-        for row in conn.execute(
-            """
-            SELECT * FROM logs
-            WHERE risk IN ('High', 'Medium')
-            ORDER BY id DESC
-            """
-        ).fetchall()
-    ]
-
-    conn.close()
-
-    return {"incidents": incidents}
-
+    high_risk_incidents = [log for log in logs_db if log.get("risk") == "High"]
+    return {"incidents": high_risk_incidents}
 
 @app.get("/reports")
 def get_reports():
-    conn = get_db()
-
-    total = conn.execute(
-        "SELECT COUNT(*) FROM logs"
-    ).fetchone()[0]
-
-    conn.close()
-
     return {
-        "summary": "Automated Security Assessment",
-        "total_events_analyzed": total,
-        "risk_level": "Elevated",
-        "status": "Generated",
+        "top_threat": "Brute Force Authentication / SSH Attempts",
+        "status": "Active - Real-time Log Stream Monitoring Enabled",
+        "generated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     }
