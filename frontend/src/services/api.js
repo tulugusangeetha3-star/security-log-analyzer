@@ -1,5 +1,6 @@
-// Change this URL to match your live Render Backend URL (without trailing slash)
-export const API_BASE_URL = "https://YOUR-BACKEND-NAME.onrender.com";
+// ⚠️ REPLACE THIS URL WITH YOUR ACTUAL RENDER BACKEND URL (NO TRAILING SLASH)
+// Example: "https://security-backend-1234.onrender.com"
+export const API_BASE_URL = "https://YOUR-ACTUAL-BACKEND-NAME.onrender.com";
 
 export const getHealth = async () => {
   try {
