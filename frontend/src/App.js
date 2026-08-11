@@ -35,3 +35,17 @@ export const apiPost = async (endpoint, data) => {
 
   return handleResponse(response);
 };
+const refreshBackendConnection = async () => {
+  try {
+    const response = ${API_BASE_URL}/;
+    const res = await fetch(response);
+    const data = await res.json();
+    if (res.ok) {
+      alert("Backend connection refreshed successfully: " + data.message);
+    } else {
+      alert("Backend responded with an error.");
+    }
+  } catch (error) {
+    alert("Failed to connect to backend.");
+  }
+};
