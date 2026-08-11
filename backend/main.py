@@ -2,6 +2,7 @@ import sqlite3
 import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 
 app = FastAPI(title="Security Log Analyzer API")
 
@@ -14,8 +15,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# SQLite Database Path
+# Database Path
 DB_PATH = os.path.join(os.path.dirname(__file__), "..", "database", "security.db")
+
+class LogEntry(BaseModel):
+    timestamp: str
+    ip: str
+    event: str
+    risk: str
 
 def get_db():
     conn = sqlite3.connect(DB_PATH)
@@ -48,7 +55,6 @@ def init_db():
         conn.commit()
     conn.close()
 
-# Initialize Database on app startup
 init_db()
 
 @app.get("/")
@@ -74,14 +80,27 @@ def get_analytics():
 @app.get("/logs")
 def get_logs():
     conn = get_db()
-    logs = [dict(row) for row in conn.execute("SELECT * FROM logs").fetchall()]
+    logs = [dict(row) for row in conn.execute("SELECT * FROM logs ORDER BY id DESC").fetchall()]
     conn.close()
     return {"logs": logs}
+
+# NEW: Endpoint to send a test log/attack entry to database
+@app.post("/logs")
+def add_log(entry: LogEntry):
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO logs (timestamp, ip, event, risk) VALUES (?, ?, ?, ?)",
+        (entry.timestamp, entry.ip, entry.event, entry.risk)
+    )
+    conn.commit()
+    conn.close()
+    return {"status": "success", "message": "New security log detected and recorded!"}
 
 @app.get("/incidents")
 def get_incidents():
     conn = get_db()
-    incidents = [dict(row) for row in conn.execute("SELECT * FROM logs WHERE risk IN ('High', 'Medium')").fetchall()]
+    incidents = [dict(row) for row in conn.execute("SELECT * FROM logs WHERE risk IN ('High', 'Medium') ORDER BY id DESC").fetchall()]
     conn.close()
     return {"incidents": incidents}
 
