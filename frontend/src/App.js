@@ -1,4 +1,4 @@
-const API_BASE_URL =
+﻿const API_BASE_URL =
   "https://security-log-analyzer-backend.onrender.com";
 
 const handleResponse = async (response) => {
@@ -49,3 +49,4 @@ const refreshBackendConnection = async () => {
     alert("Failed to connect to backend.");
   }
 };
+
