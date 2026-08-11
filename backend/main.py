@@ -33,6 +33,13 @@ def init_db():
     os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
     conn = get_db()
     cursor = conn.cursor()
+    
+    # Check if table exists and has 'event' column; if outdated, drop and recreate
+    try:
+        cursor.execute("SELECT event FROM logs LIMIT 1")
+    except sqlite3.OperationalError:
+        cursor.execute("DROP TABLE IF EXISTS logs")
+
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS logs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -84,7 +91,6 @@ def get_logs():
     conn.close()
     return {"logs": logs}
 
-# NEW: Endpoint to send a test log/attack entry to database
 @app.post("/logs")
 def add_log(entry: LogEntry):
     conn = get_db()
