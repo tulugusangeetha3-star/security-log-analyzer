@@ -1,109 +1,67 @@
-from fastapi import FastAPI, HTTPException
+﻿from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List
 from datetime import datetime
 
 app = FastAPI(title="Security Log Analyzer API")
 
-# --- CORS Configuration ---
-# Allows frontend applications (Render / localhost) to make API requests
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Adjust to specific frontend domain in production
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# --- Data Schemas ---
-class LogCreate(BaseModel):
-    ip: str
-    event: str
-    risk: str
+security_logs = []
 
-class LogItem(BaseModel):
+class LogEntry(BaseModel):
+    ip_address: str
+    event_description: str
+    risk_severity: str
+
+class LogResponse(LogEntry):
     id: int
     timestamp: str
-    ip: str
-    event: str
-    risk: str
-
-# --- In-Memory Database / Sample Data ---
-logs_db: List[dict] = [
-    {
-        "id": 1,
-        "timestamp": "2026-08-11 07:15:00",
-        "ip": "192.168.1.105",
-        "event": "Unauthorized SSH Attempt",
-        "risk": "High"
-    },
-    {
-        "id": 2,
-        "timestamp": "2026-08-11 07:20:12",
-        "ip": "10.0.0.15",
-        "event": "Port Scan Detected",
-        "risk": "Medium"
-    },
-    {
-        "id": 3,
-        "timestamp": "2026-08-11 07:30:45",
-        "ip": "192.168.1.50",
-        "event": "Successful User Login",
-        "risk": "Low"
-    }
-]
-
-# --- API Endpoints ---
 
 @app.get("/")
 def read_root():
-    return {"message": "Security Log Analyzer API is running"}
+    return {"status": "online", "message": "Backend connected successfully"}
 
-@app.get("/health")
-def get_health():
-    return {"status": "healthy"}
-
-@app.get("/logs")
+@app.get("/logs", response_model=List[LogResponse])
 def get_logs():
-    return {"logs": logs_db}
+    return security_logs
 
-@app.post("/logs")
-def create_log(log_data: LogCreate):
-    new_id = len(logs_db) + 1 if logs_db else 1
+@app.post("/logs", response_model=LogResponse, status_code=status.HTTP_201_CREATED)
+def create_log(log: LogEntry):
     new_log = {
-        "id": new_id,
+        "id": len(security_logs) + 1,
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "ip": log_data.ip,
-        "event": log_data.event,
-        "risk": log_data.risk
+        "ip_address": log.ip_address,
+        "event_description": log.event_description,
+        "risk_severity": log.risk_severity,
     }
-    logs_db.insert(0, new_log)  # Prepend newest log
-    return {"message": "Log recorded successfully", "log": new_log}
-
-@app.get("/analytics")
-def get_analytics():
-    total_logs = len(logs_db)
-    high_risk = sum(1 for log in logs_db if log.get("risk") == "High")
-    medium_risk = sum(1 for log in logs_db if log.get("risk") == "Medium")
-    low_risk = sum(1 for log in logs_db if log.get("risk") == "Low")
-
-    return {
-        "total_logs": total_logs,
-        "high_risk": high_risk,
-        "medium_risk": medium_risk,
-        "low_risk": low_risk
-    }
+    security_logs.append(new_log)
+    return new_log
 
 @app.get("/incidents")
 def get_incidents():
-    high_risk_incidents = [log for log in logs_db if log.get("risk") == "High"]
-    return {"incidents": high_risk_incidents}
+    return [log for log in security_logs if log["risk_severity"].lower() == "high"]
 
 @app.get("/reports")
 def get_reports():
     return {
-        "top_threat": "Brute Force Authentication / SSH Attempts",
-        "status": "Active - Real-time Log Stream Monitoring Enabled",
-        "generated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        "primary_threat_vector": "Brute Force Authentication",
+        "rule_engine_status": "Generated",
+        "total_analyzed": len(security_logs)
+    }
+
+@app.get("/analytics")
+def get_analytics():
+    return {
+        "total_logs": len(security_logs),
+        "high_risk": sum(1 for log in security_logs if log["risk_severity"].lower() == "high"),
+        "medium_risk": sum(1 for log in security_logs if log["risk_severity"].lower() == "medium"),
+        "low_risk": sum(1 for log in security_logs if log["risk_severity"].lower() == "low")
     }
