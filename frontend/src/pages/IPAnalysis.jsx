@@ -8,8 +8,6 @@ export default function IPAnalysis() {
   const isValidIPv4 = (ip) => {
     if (!ip || typeof ip !== 'string') return false;
     const trimmed = ip.trim();
-    
-    // Must contain exactly 3 dots
     const dotCount = (trimmed.match(/\./g) || []).length;
     if (dotCount !== 3) return false;
 
@@ -25,15 +23,16 @@ export default function IPAnalysis() {
   };
 
   const handleAnalyze = () => {
-    setIpError('');
-    setAnalysisResult(null);
-
-    if (!isValidIPv4(ipInput)) {
+    const trimmedInput = ipInput.trim();
+    
+    if (!isValidIPv4(trimmedInput)) {
+      setAnalysisResult(null);
       setIpError('You entered wrong address');
       return;
     }
 
-    const parts = ipInput.trim().split('.').map(Number);
+    setIpError('');
+    const parts = trimmedInput.split('.').map(Number);
     const [a, b] = parts;
     let rangeType = "Public IPv4";
     if (a === 10) rangeType = "Private Class A (10.0.0.0 – 10.255.255.255)";
@@ -43,7 +42,7 @@ export default function IPAnalysis() {
     else if (a === 169 && b === 254) rangeType = "Link-local (169.254.0.0 – 169.254.255.255)";
 
     setAnalysisResult({
-      ip: ipInput.trim(),
+      ip: trimmedInput,
       riskLevel: 'Low Risk',
       eventsCount: 0,
       range: rangeType,
